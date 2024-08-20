@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>聊天界面</title>
+    <style>
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 10px;
+        }
+
+        .chat-container {
+            height: 90%;
+            display: flex;
+            flex-direction: column;
+            width: 80%;
+            margin: auto auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            height: 400px;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+
+        .chat-message {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .chat-message-sent {
+            justify-content: flex-end;
+        }
+
+        .chat-message-received {
+            justify-content: flex-start;
+        }
+
+        .chat-input {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f2f2f2;
+            padding: 10px;
+        }
+
+        .chat-input input[type="text"] {
+            flex-grow: 1;
+            margin-right: 20px;
+            border: none;
+            font-size: 16px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .chat-input input[type="submit"] {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            font-size: 16px;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .chat-message-sent .message-bubble {
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 10px;
+            padding: 10px;
+            max-width: 60%;
+        }
+
+        .chat-message-received .message-bubble {
+            background-color: #f2f2f2;
+            border-radius: 10px;
+            padding: 10px;
+            max-width: 60%;
+        }
+
+        .my-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+            background-color: #ccc;
+            background-image: url('https://img0.baidu.com/it/u=4129085291,1924555546&fm=253&fmt=auto&app=120&f=JPEG?w=500&h=500');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+        }
+
+        .chat-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+            background-color: #ccc;
+            background-image: url('https://q6.itc.cn/q_70/images03/20240413/13469194967d4764aeaef30293b13193.jpeg?w=500&h=500');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+        }
+
+        .message-bubble {
+            max-width: 30%;
+        }
+    </style>
+</head>
+<body onload="websocketClient()">
+<div class="chat-container" id="chatWindow">
+    <div class="chat-messages">
+        <!-- 这里用来显示聊天消息 -->
+    </div>
+    <div class="chat-input">
+        <input type="text" id="messageInput" placeholder="输入消息"/>
+        <input type="submit" value="发送" onclick="sendMessage()"/>
+    </div>
+</div>
+
+<script>
+    let userId = Math.floor(Math.random() * 1000) + "";
+    let disableInput = false;
+    var hostname = "localhost:9310/AI"
+    var socket
+
+    function sendMessage() {
+        var messageInput = document.getElementById("messageInput");
+        var message = messageInput.value;
+        if (message.trim() !== "") {
+            var chatMessages = document.querySelector(".chat-messages");
+            var messageElement = document.createElement("div");
+            messageElement.classList.add("chat-message", "chat-message-sent"); // 添加样式类
+            messageElement.innerHTML = `
+                <div class="my-avatar"></div>
+                <div class="message-bubble">${message}</div>`;
+            chatMessages.appendChild(messageElement);
+            messageInput.value = "";
+            // 通过 WebSocket 发送消息
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                var payload = {
+                    "msg": message
+                };
+                socket.send(message); // 发送消息
+                disableInput = true;
+                document.querySelector("#messageInput").readOnly = true;
+                scrollToBottom();
+            }
+        }
+    }
+
+    function websocketClient() {
+        socket = new WebSocket("ws://" + hostname + "/userId=" + userId);
+        let createContent = true;
+        let currentContentId = Math.floor(Math.random() * 1000);
+        // 连接打开时触发
+        socket.onopen = function (event) {
+            console.log("WebSocket 连接已打开");
+        };
+
+        // 接收到消息时触发
+        socket.onmessage = function (event) {
+            if (createContent) {
+                console.log("执行了")
+                // 创建文本框
+                let chatMessages = document.querySelector(".chat-messages");
+                let messageElement = document.createElement("div");
+                messageElement.classList.add("chat-message", "chat-message-received"); // 添加样式类
+                messageElement.innerHTML = `
+                    <div class="chat-avatar"></div>
+                    <div id="message-bubble-${currentContentId}" class="message-bubble"></div>
+                `;
+                chatMessages.appendChild(messageElement);
+                createContent = false;
+            }
+
+            let parse = JSON.parse(event.data);
+            console.log(parse);
+            if (parse.status === 1) {
+                var content = parse.content;
+                // console.log("message-bubble-" + currentContentId);
+                console.log(content);
+
+                document.getElementById("message-bubble-" + currentContentId).innerText += content
+            } else if (parse.status === -1) {
+                console.log(-1111111111);
+
+                createContent = true;
+                currentContentId = Math.floor(Math.random() * 1000);
+                disableInput = false
+                document.querySelector("#messageInput").readOnly = disableInput
+            }
+            scrollToBottom();
+        };
+
+        // 连接关闭时触发
+        socket.onclose = function (event) {
+            console.log("WebSocket 连接已关闭");
+        };
+
+        // 发生错误时触发
+        socket.onerror = function (error) {
+            console.error("WebSocket 错误：" + error);
+        };
+    }
+
+    function scrollToBottom() {
+        console.log("调用了滑轮事件")
+        let chatMessages = document.querySelector('.chat-messages');
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    var inputBox = document.querySelector('.chat-input input');
+    inputBox.addEventListener('keyup', function (event) {
+        if (event.keyCode === 13 && !disableInput) {
+            event.preventDefault();
+            sendMessage();
+        }
+    });
+
+</script>
+</body>
+</html>

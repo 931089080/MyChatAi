@@ -1,0 +1,11 @@
+server:
+  port: 9310
+
+
+spark-ai:
+  hostUrl: https://spark-api.xf-yun.com/v3.5/chat   # wss://spark-api.xf-yun.com/v3.5/chat
+  appid: 6a108640
+  apiSecret: MjJjNWYwNTkzNjY4ZGFmNGU1NmE5YzFk
+  apiKey: b4a1c577a71b11e4a5a3074ced6a4341
+  domain: generalv3.5   #generalv3.5   4.0Ultra
+
