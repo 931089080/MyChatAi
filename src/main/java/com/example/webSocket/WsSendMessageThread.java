@@ -20,18 +20,18 @@ import java.util.UUID;
  * @date: 2024-08-16  18:05
  */
 @Slf4j
-public class SendMessageThread extends Thread{
+public class WsSendMessageThread extends Thread {
 
     private static final SparkAiProperties sparkAiProperties = SpringUtil.getBean(SparkAiProperties.class);
 
-    public static List<RoleContent> historyList = new ArrayList<>(); // 对话历史存储集合
-
     private WebSocket webSocket;
     private String newQuestion;
+    private String userId;
 
-    public SendMessageThread(WebSocket webSocket, String newQuestion) {
+    public WsSendMessageThread(WebSocket webSocket, String newQuestion, String userId) {
         this.webSocket = webSocket;
         this.newQuestion = newQuestion;
+        this.userId = userId;
     }
 
     public void run() {
@@ -54,6 +54,7 @@ public class SendMessageThread extends Thread{
             JSONArray text = new JSONArray();
 
             // 历史问题获取
+            List<RoleContent> historyList = WebSocketManager.historyLists.get(userId);
             if (historyList.size() > 0) {
                 for (RoleContent tempRoleContent : historyList) {
                     text.add(JSON.toJSON(tempRoleContent));
@@ -74,7 +75,7 @@ public class SendMessageThread extends Thread{
             requestJson.put("parameter", parameter);
             requestJson.put("payload", payload);
 
-            log.info("请求参数 ===> {}", requestJson);
+            log.info("请求参数 -> {}", requestJson);
             webSocket.send(requestJson.toString());
 
         } catch (Exception e) {

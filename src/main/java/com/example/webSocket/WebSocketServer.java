@@ -1,31 +1,20 @@
 package com.example.webSocket;
 
 import cn.hutool.extra.spring.SpringUtil;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.example.model.RoleContent;
 import com.example.properties.SparkAiProperties;
-import com.google.gson.Gson;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.Resource;
 import jakarta.websocket.OnClose;
 import jakarta.websocket.OnMessage;
 import jakarta.websocket.OnOpen;
 import jakarta.websocket.Session;
 import jakarta.websocket.server.PathParam;
 import jakarta.websocket.server.ServerEndpoint;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.WebSocket;
-import org.springframework.beans.factory.BeanFactoryUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -53,13 +42,14 @@ public class WebSocketServer {
 
     @OnOpen
     public void onOpen(Session session, @PathParam("userId") String userId) {
-        log.info("客户端 onOpen ->  {}", session);
+        log.info("客户端 onOpen ->  {}", userId);
+        WebSocketManager.historyLists.put(userId, new ArrayList<>());
         WebSocketManager.addSession(userId, session);
 
         // 构建鉴权url
         try {
 
-            String authUrl = getAuthUrl(sparkAiProperties.getHostUrl(), sparkAiProperties.getApiKey(), sparkAiProperties.getApiSecret());
+            String authUrl = getAuthUrl(sparkAiProperties.getWsUrl(), sparkAiProperties.getApiKey(), sparkAiProperties.getApiSecret());
             requestUrl = authUrl.replace("http://", "ws://").replace("https://", "wss://");
 
         } catch (Exception e) {
@@ -71,19 +61,21 @@ public class WebSocketServer {
     @OnMessage
     public void onMessage(String message, @PathParam("userId") String userId) {
         log.info("接收客户端 onMessage -> {}", message);
+        log.info("历史消息 -> {}", WebSocketManager.historyLists.get(userId));
 
         OkHttpClient client = new OkHttpClient.Builder().build();
         Request request = new Request.Builder().url(requestUrl).build();
         webSocket = client.newWebSocket(request, new BigModelNew(userId, message));
 
-        SendMessageThread sendMessageThread = new SendMessageThread(webSocket, message);
-        sendMessageThread.start();
+        WsSendMessageThread wsSendMessageThread = new WsSendMessageThread(webSocket, message, userId);
+        wsSendMessageThread.start();
     }
 
     @OnClose
     public void onClose(@PathParam("userId") String userId) {
         log.warn("客户端 OnClose -> " + WebSocketManager.getSession(userId));
         WebSocketManager.removeSession(userId);
+        WebSocketManager.historyLists.remove(userId);
     }
 
     // 鉴权方法

@@ -1,26 +1,20 @@
 package com.example;
 
 
-import com.example.model.UserMessage;
-import com.example.properties.SparkAiProperties;
-import com.example.webSocket.WebSocketManager;
-import com.example.webSocket.WebSocketServer;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 
-import java.util.List;
-import java.util.Map;
-
+@EnableAsync
+@EnableScheduling
 @EnableConfigurationProperties
 @SpringBootApplication
-@EnableScheduling
-public class Main {
+public class MyChatAi {
 
     public static void main(String[] args) {
-        new SpringApplicationBuilder(Main.class).build().run();
+        new SpringApplicationBuilder(MyChatAi.class).build().run();
 //        SpringApplication.run(Main.class, args);
     }
 

@@ -32,7 +32,6 @@ import java.util.*;
 @Slf4j
 public class BigModelNew extends WebSocketListener {
 
-    public static List<RoleContent> historyList = new ArrayList<>(); // 对话历史存储集合
     public static final Gson gson = new Gson();
 
     public static String totalAnswer = ""; // 大模型的答案汇总
@@ -73,7 +72,7 @@ public class BigModelNew extends WebSocketListener {
                 //发送答案给客户端
 //                clientSession.getBasicRemote().sendText(temp.getContent());
                 temp.setStatus(1);
-                log.info("JSON.toJSONString(temp) -> {}", JSON.toJSONString(temp));
+//                log.info("JSON.toJSONString(temp) -> {}", JSON.toJSONString(temp));
                 clientSession.getBasicRemote().sendText(JSON.toJSONString(temp));
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -108,11 +107,13 @@ public class BigModelNew extends WebSocketListener {
 
             System.out.println();
             System.out.println("---------------------------------------------------------------------------------------------------");
-            if (canAddHistory()) {
+            List<RoleContent> historyList = WebSocketManager.historyLists.get(userId);
+            if (canAddHistory(historyList)) {
                 RoleContent roleContent = new RoleContent();
                 roleContent.setRole("assistant");
                 roleContent.setContent(totalAnswer);
                 historyList.add(roleContent);
+                log.warn("保存历史 {} -> {}", userId, roleContent);
             } else {
                 historyList.remove(0);
                 RoleContent roleContent = new RoleContent();
@@ -120,6 +121,7 @@ public class BigModelNew extends WebSocketListener {
                 roleContent.setContent(totalAnswer);
                 historyList.add(roleContent);
             }
+            totalAnswer = "";
         }
     }
 
@@ -150,50 +152,19 @@ public class BigModelNew extends WebSocketListener {
     }
 
     // 由于历史记录最大上线1.2W左右，需要判断是能能加入历史
-    public static boolean canAddHistory() {
+    public static boolean canAddHistory(List<RoleContent> historyList) {
         int history_length = 0;
         for (RoleContent temp : historyList) {
             history_length = history_length + temp.getContent().length();
         }
         if (history_length > 12000) {
-            historyList.remove(0);
-            historyList.remove(1);
-            historyList.remove(2);
-            historyList.remove(3);
-            historyList.remove(4);
+            for (int i = 0; i < 5; i++) {
+                historyList.remove(i);
+            }
             return false;
         } else {
             return true;
         }
-    }
-
-    // 鉴权方法
-    public static String getAuthUrl(String hostUrl, String apiKey, String apiSecret) throws Exception {
-//        URL url = new URL(hostUrl);
-        URI url = new URI(hostUrl);
-        // 时间
-        SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
-        format.setTimeZone(TimeZone.getTimeZone("GMT"));
-        String date = format.format(new Date());
-        // 拼接
-        String preStr = "host: " + url.getHost() + "\n" + "date: " + date + "\n" + "GET " + url.getPath() + " HTTP/1.1";
-        // System.err.println(preStr);
-        // SHA256加密
-        Mac mac = Mac.getInstance("hmacsha256");
-        SecretKeySpec spec = new SecretKeySpec(apiSecret.getBytes(StandardCharsets.UTF_8), "hmacsha256");
-        mac.init(spec);
-
-        byte[] hexDigits = mac.doFinal(preStr.getBytes(StandardCharsets.UTF_8));
-        // Base64加密
-        String sha = Base64.getEncoder().encodeToString(hexDigits);
-        // System.err.println(sha);
-        // 拼接
-        String authorization = String.format("api_key=\"%s\", algorithm=\"%s\", headers=\"%s\", signature=\"%s\"", apiKey, "hmac-sha256", "host date request-line", sha);
-        // 拼接地址
-        HttpUrl httpUrl = Objects.requireNonNull(HttpUrl.parse("https://" + url.getHost() + url.getPath())).newBuilder().addQueryParameter("authorization", Base64.getEncoder().encodeToString(authorization.getBytes(StandardCharsets.UTF_8))).addQueryParameter("date", date).addQueryParameter("host", url.getHost()).build();
-
-        // System.err.println(httpUrl.toString());
-        return httpUrl.toString();
     }
 
 }

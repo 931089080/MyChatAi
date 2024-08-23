@@ -1,9 +1,6 @@
 package com.example.properties;
 
-import jakarta.annotation.PostConstruct;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
@@ -18,10 +15,12 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "spark-ai")
 public class SparkAiProperties {
 
-    public String hostUrl;
-    public String appid = "6a108640";
-    public String apiSecret = "MjJjNWYwNTkzNjY4ZGFmNGU1NmE5YzFk";
-    public String apiKey = "b4a1c577a71b11e4a5a3074ced6a4341";
-    public String domain = "4.0Ultra"; //取值为[general,generalv2,generalv3,pro-128k,generalv3.5,4.0Ultra]
+    public String wsUrl;
+    public String sseUrl;
+    public String appid;
+    public String apiSecret;
+    public String apiKey;
+    public String domain;
+    public String APIPassword;
 
 }

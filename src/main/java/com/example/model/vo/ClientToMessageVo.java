@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class MessageVo {
+public class ClientToMessageVo {
     /**
      * 客户端id
      */

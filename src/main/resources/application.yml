@@ -3,9 +3,11 @@ server:
 
 
 spark-ai:
-  hostUrl: https://spark-api.xf-yun.com/v3.5/chat   # wss://spark-api.xf-yun.com/v3.5/chat
+  wsUrl: https://spark-api.xf-yun.com/v3.5/chat   # wss://spark-api.xf-yun.com/v3.5/chat
+  sse-url: https://spark-api-open.xf-yun.com/v1/chat/completions
+  APIPassword: GRLkYmKIYSkeNYaIpOnN:ayBNCghnACpBYvfMyhYG
   appid: 6a108640
   apiSecret: MjJjNWYwNTkzNjY4ZGFmNGU1NmE5YzFk
   apiKey: b4a1c577a71b11e4a5a3074ced6a4341
-  domain: generalv3.5   #generalv3.5   4.0Ultra
+  domain: generalv3.5   #取值为[general,generalv2,generalv3,pro-128k,generalv3.5,4.0Ultra]
 
