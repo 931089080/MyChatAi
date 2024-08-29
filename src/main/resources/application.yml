@@ -1,6 +1,6 @@
 server:
   port: 9310
-
+nettyPort: 9311
 
 spark-ai:
   wsUrl: https://spark-api.xf-yun.com/v3.5/chat   # wss://spark-api.xf-yun.com/v3.5/chat
